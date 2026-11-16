@@ -4,6 +4,7 @@
 #include "esp_system.h"
 #include "esp_timer.h"
 #include "esp_attr.h"
+#include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "zigbee.h"
@@ -142,8 +143,36 @@ static bool report_measurement(uint16_t co2, int32_t temperature, int32_t humidi
     return plausible;
 }
 
+// Diagnosis of the I2C wiring: release the line (open drain, no internal
+// pull-up) and read it back, then drive it low and read it back.
+// Released = 1: the pull-up of the sensor board reaches the line.
+// Driven low = 0: the ESP pin can pull the line down.
+static void pin_selftest(gpio_num_t pin, const char *name)
+{
+    gpio_config_t cfg = {
+        .pin_bit_mask = 1ULL << pin,
+        .mode = GPIO_MODE_INPUT_OUTPUT_OD,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&cfg);
+    gpio_set_level(pin, 1);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    int released = gpio_get_level(pin);
+    gpio_set_level(pin, 0);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    int driven_low = gpio_get_level(pin);
+    gpio_set_level(pin, 1);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    ESP_LOGW(TAG, "Pin test %s (GPIO%d): released=%d driven_low=%d (ok: 1/0)", name, pin, released, driven_low);
+    gpio_reset_pin(pin);
+}
+
 void sdc41_task(void *pvParameters)
 {
+    pin_selftest(SDC4X_SDA_PIN, "SDA");
+    pin_selftest(SDC4X_SCL_PIN, "SCL");
     sensirion_i2c_hal_init(SDC4X_SDA_PIN, SDC4X_SCL_PIN);
     // Always reset the sensor on start: after a watchdog restart it may be in any state.
     reset_sensor();
