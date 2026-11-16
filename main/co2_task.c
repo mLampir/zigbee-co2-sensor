@@ -173,6 +173,21 @@ void sdc41_task(void *pvParameters)
 {
     pin_selftest(SDC4X_SDA_PIN, "SDA");
     pin_selftest(SDC4X_SCL_PIN, "SCL");
+#if I2C_WIRING_DIAG
+    gpio_config_t diag = {
+        .pin_bit_mask = (1ULL << SDC4X_SDA_PIN) | (1ULL << SDC4X_SCL_PIN),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&diag);
+    while (1) {
+        ESP_LOGW(TAG, "Wiring diag: SDA (GPIO%d) = %d, SCL (GPIO%d) = %d (no internal pull-ups)",
+                 SDC4X_SDA_PIN, gpio_get_level(SDC4X_SDA_PIN), SDC4X_SCL_PIN, gpio_get_level(SDC4X_SCL_PIN));
+        vTaskDelay(pdMS_TO_TICKS(5000));
+    }
+#endif
     sensirion_i2c_hal_init(SDC4X_SDA_PIN, SDC4X_SCL_PIN);
     // Always reset the sensor on start: after a watchdog restart it may be in any state.
     reset_sensor();
