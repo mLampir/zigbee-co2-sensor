@@ -32,8 +32,9 @@
 // and I2C to the SCD4x failed again and again after sleeping.
 #define ENABLE_LIGHT_SLEEP 0
 
-// Wiring diagnosis: do not talk to the SCD4x, keep SDA/SCL as inputs without
-// internal pull-ups and log their levels every 5 s (voltages can be measured).
+// Wiring diagnosis: do not talk to the SCD4x, but switch SDA and the free pins
+// D5, D8, D9, D10 between 0 V and 3.3 V every 3 s (measure with a multimeter
+// whether a solder joint follows its pin).
 #define I2C_WIRING_DIAG 0
 
 // Misc settings, for very fine tuning

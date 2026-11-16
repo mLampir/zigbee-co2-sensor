@@ -2,6 +2,16 @@
 
 > **Fork** of [florianL21/zigbee-co2-sensor](https://github.com/florianL21/zigbee-co2-sensor) with fixes for a sensor that stops measuring:
 >
+> - ⚠️ **SCL is on GPIO19 (D8), not GPIO23 (D5)** – adapted to one particular
+>   sensor whose D5 pad has no connection. If you wire it as in the instructions
+>   below, set `SDC4X_SCL_PIN` in `main/config.h` back to `GPIO_NUM_23` and build
+>   yourself. The release files and the web flasher linked below are not
+>   interchangeable: the web flasher installs the upstream firmware.
+> - `I2C_WIRING_DIAG` in `main/config.h` (off by default) builds a test firmware
+>   that does not talk to the SCD4x but toggles SDA and the free pins D5, D8, D9,
+>   D10 between 0 V and 3.3 V every 3 s, to find a broken pad or solder joint with a
+>   multimeter. At every start the firmware also logs a short pin test for SDA/SCL
+>   (`released=1` means the SCD4x pull-up is reached).
 > - **No light sleep** between measurements (`ENABLE_LIGHT_SLEEP` in `main/config.h`).
 >   With light sleep the SCD4x stopped answering on I2C right after the first sleep;
 >   without it the sensor measures reliably. It is USB powered, so the extra power
@@ -72,7 +82,7 @@ The firmware is configured to use the following PIO pins by default:
 | GPIO   | Function              |
 | ------ | --------------------- |
 | GPIO22 | I2C SDA to SCD-41     |
-| GPIO23 | I2C SCL to SCD-41     |
+| GPIO23 | I2C SCL to SCD-41 (**this fork: GPIO19 / D8**, see top) |
 
 With the suggested breakout boards from above it would be wired up like this:
 
