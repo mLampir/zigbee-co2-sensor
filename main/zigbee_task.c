@@ -89,24 +89,27 @@ void esp_zb_task(void *pvParameters)
     // ------------------------------ Cluster Temperature ------------------------------
     esp_zb_temperature_meas_cluster_cfg_t temperature_meas_cfg = {
         .measured_value = 0,
-        .min_value = TEMP_MIN,
-        .max_value = TEMP_MAX,
+        // ZCL units: 0.01 °C. Values outside min/max are rejected (INVALID_VALUE)
+        .min_value = TEMP_MIN * 100,
+        .max_value = TEMP_MAX * 100,
     };
     esp_zb_attribute_list_t *esp_zb_temperature_meas_cluster = esp_zb_temperature_meas_cluster_create(&temperature_meas_cfg);
 
     // ------------------------------ Cluster Humidity ------------------------------
     esp_zb_humidity_meas_cluster_cfg_t humidity_meas_cfg = {
         .measured_value = 0,
-        .min_value = HUMID_MIN,
-        .max_value = HUMID_MAX,
+        // ZCL units: 0.01 %
+        .min_value = HUMID_MIN * 100,
+        .max_value = HUMID_MAX * 100,
     };
     esp_zb_attribute_list_t *esp_zb_humidity_meas_cluster = esp_zb_humidity_meas_cluster_create(&humidity_meas_cfg);
 
     // ------------------------------ Cluster CO2 -----------------------------------
     esp_zb_carbon_dioxide_measurement_cluster_cfg_t carbon_dioxide_meas_cfg = {
         .measured_value = 0,
-        .min_measured_value = CO2_MIN,
-        .max_measured_value = CO2_MAX,
+        // ZCL units: fraction (ppm / 1e6)
+        .min_measured_value = CO2_MIN / 1000000.0f,
+        .max_measured_value = CO2_MAX / 1000000.0f,
     };
     esp_zb_attribute_list_t *esp_zb_carbon_dioxide_meas_cluster = esp_zb_carbon_dioxide_measurement_cluster_create(&carbon_dioxide_meas_cfg);
 
