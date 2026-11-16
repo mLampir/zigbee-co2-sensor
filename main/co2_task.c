@@ -182,12 +182,15 @@ void sdc41_task(void *pvParameters)
         .intr_type = GPIO_INTR_DISABLE,
     };
     gpio_config(&diag);
-    // Drive SCL as push-pull output: 3 s high, 3 s low. If the voltage at the
-    // solder joint follows, the joint is connected to the pin.
+    // Drive SDA and SCL as push-pull outputs together: 3 s high, 3 s low. If the
+    // voltage at a solder joint follows, the joint is connected to its pin.
+    // SDA is known to be connected and serves as reference.
     gpio_set_direction(SDC4X_SCL_PIN, GPIO_MODE_INPUT_OUTPUT);
+    gpio_set_direction(SDC4X_SDA_PIN, GPIO_MODE_INPUT_OUTPUT);
     int level = 1;
     while (1) {
         gpio_set_level(SDC4X_SCL_PIN, level);
+        gpio_set_level(SDC4X_SDA_PIN, level);
         vTaskDelay(pdMS_TO_TICKS(50));
         ESP_LOGW(TAG, "Wiring diag: SCL (GPIO%d) driven %s, reads %d; SDA (GPIO%d) reads %d",
                  SDC4X_SCL_PIN, level ? "HIGH 3.3V" : "LOW 0V", gpio_get_level(SDC4X_SCL_PIN),
