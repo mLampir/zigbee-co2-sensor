@@ -174,27 +174,23 @@ void sdc41_task(void *pvParameters)
     pin_selftest(SDC4X_SDA_PIN, "SDA");
     pin_selftest(SDC4X_SCL_PIN, "SCL");
 #if I2C_WIRING_DIAG
-    gpio_config_t diag = {
-        .pin_bit_mask = (1ULL << SDC4X_SDA_PIN) | (1ULL << SDC4X_SCL_PIN),
-        .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE,
-    };
-    gpio_config(&diag);
-    // Drive SDA and SCL as push-pull outputs together: 3 s high, 3 s low. If the
-    // voltage at a solder joint follows, the joint is connected to its pin.
-    // SDA is known to be connected and serves as reference.
-    gpio_set_direction(SDC4X_SCL_PIN, GPIO_MODE_INPUT_OUTPUT);
-    gpio_set_direction(SDC4X_SDA_PIN, GPIO_MODE_INPUT_OUTPUT);
+    // Drive SDA and all free candidate pins for SCL as push-pull outputs
+    // together: 3 s high, 3 s low. A solder joint whose voltage follows is
+    // connected to its pin. D5 = GPIO23, D8 = GPIO19, D9 = GPIO20, D10 = GPIO18.
+    const gpio_num_t diag_pins[] = {SDC4X_SDA_PIN, GPIO_NUM_23, GPIO_NUM_19, GPIO_NUM_20, GPIO_NUM_18};
+    for (size_t i = 0; i < sizeof(diag_pins) / sizeof(diag_pins[0]); i++) {
+        gpio_reset_pin(diag_pins[i]);
+        gpio_set_direction(diag_pins[i], GPIO_MODE_INPUT_OUTPUT);
+    }
     int level = 1;
     while (1) {
-        gpio_set_level(SDC4X_SCL_PIN, level);
-        gpio_set_level(SDC4X_SDA_PIN, level);
+        for (size_t i = 0; i < sizeof(diag_pins) / sizeof(diag_pins[0]); i++) {
+            gpio_set_level(diag_pins[i], level);
+        }
         vTaskDelay(pdMS_TO_TICKS(50));
-        ESP_LOGW(TAG, "Wiring diag: SCL (GPIO%d) driven %s, reads %d; SDA (GPIO%d) reads %d",
-                 SDC4X_SCL_PIN, level ? "HIGH 3.3V" : "LOW 0V", gpio_get_level(SDC4X_SCL_PIN),
-                 SDC4X_SDA_PIN, gpio_get_level(SDC4X_SDA_PIN));
+        ESP_LOGW(TAG, "Wiring diag: driven %s; reads SDA(D4)=%d D5=%d D8=%d D9=%d D10=%d",
+                 level ? "HIGH 3.3V" : "LOW 0V", gpio_get_level(SDC4X_SDA_PIN), gpio_get_level(GPIO_NUM_23),
+                 gpio_get_level(GPIO_NUM_19), gpio_get_level(GPIO_NUM_20), gpio_get_level(GPIO_NUM_18));
         vTaskDelay(pdMS_TO_TICKS(2950));
         level = !level;
     }
