@@ -21,6 +21,8 @@ static const char *TAG = "sdc41_task";
 static RTC_NOINIT_ATTR uint32_t diagnostics_magic;
 static RTC_NOINIT_ATTR uint32_t error_count;
 static RTC_NOINIT_ATTR uint32_t restart_count;
+// Set by the Zigbee task once the counters have reporting info (see zigbee_task.c)
+bool diagnostics_reporting_ok = false;
 
 void diagnostics_init(void)
 {
@@ -47,6 +49,9 @@ void diagnostics_init(void)
 
 static void report_diagnostics(void)
 {
+    if (!diagnostics_reporting_ok) {
+        return;
+    }
     float_t errors = error_count;
     float_t restarts = restart_count;
     reportAttribute(HA_ESP_ERRORS_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_ANALOG_INPUT, ESP_ZB_ZCL_ATTR_ANALOG_INPUT_PRESENT_VALUE_ID, &errors);

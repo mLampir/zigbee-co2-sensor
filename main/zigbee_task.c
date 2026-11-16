@@ -1,3 +1,4 @@
+#include <string.h>
 #include "nvs_flash.h"
 #include "esp_check.h"
 #include "esp_log.h"
@@ -148,6 +149,36 @@ void esp_zb_task(void *pvParameters)
 
     // ------------------------------ Register Device ------------------------------
     esp_zb_device_register(esp_zb_ep_list);
+
+    // esp_zb_zcl_report_attr_cmd_req() asserts (esp_zigbee_zcl_command.c:325) if
+    // the endpoint has no reporting info for the attribute. The library creates
+    // it for the measurement clusters, not for Analog Input, so add it here
+    // (no periodic reports, huge delta: the firmware reports by itself).
+    diagnostics_reporting_ok = true;
+    for (size_t i = 0; i < sizeof(counter_endpoints); i++) {
+        esp_zb_zcl_reporting_info_t reporting_info = {
+            .direction = ESP_ZB_ZCL_CMD_DIRECTION_TO_SRV,
+            .ep = counter_endpoints[i],
+            .cluster_id = ESP_ZB_ZCL_CLUSTER_ID_ANALOG_INPUT,
+            .cluster_role = ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
+            .dst.profile_id = ESP_ZB_AF_HA_PROFILE_ID,
+            .u.send_info.min_interval = 1,
+            .u.send_info.max_interval = 0,
+            .u.send_info.def_min_interval = 1,
+            .u.send_info.def_max_interval = 0,
+            .attr_id = ESP_ZB_ZCL_ATTR_ANALOG_INPUT_PRESENT_VALUE_ID,
+            .manuf_code = ESP_ZB_ZCL_ATTR_NON_MANUFACTURER_SPECIFIC,
+        };
+        float_t delta = 1000000.0f;
+        memcpy(reporting_info.u.send_info.delta.data_buf, &delta, sizeof(delta));
+        esp_err_t err = esp_zb_zcl_update_reporting_info(&reporting_info);
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "No reporting info for endpoint %d (%s), counters will not be sent",
+                     counter_endpoints[i], esp_err_to_name(err));
+            diagnostics_reporting_ok = false;
+        }
+    }
+
     esp_zb_core_action_handler_register(zb_action_handler);
     esp_zb_set_primary_network_channel_set(ESP_ZB_PRIMARY_CHANNEL_MASK);
 
