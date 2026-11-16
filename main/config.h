@@ -8,6 +8,13 @@
 #define SDC4X_SCL_PIN  GPIO_NUM_23
 // Recommened measurement interval from sensirion is 5 minutes as the default ASC settings are assuming 5 minutes
 #define MEASURE_INTERVAL_MS (60 * 5 * 1000)
+// After the 5 s single shot wait, poll the data ready flag at most this long
+#define DATA_READY_TRIES 50
+#define DATA_READY_POLL_MS 100
+// Wait between attempts after a failed measurement
+#define RETRY_DELAY_MS (10 * 1000)
+// Restart the ESP if no valid measurement succeeded for this long
+#define NO_MEASUREMENT_RESTART_MS (15 * 60 * 1000)
 
 
 // Sanity values for measurement bounds

@@ -1,9 +1,13 @@
 #include "esp_zigbee_core.h"
 #include "esp_check.h"
+#include "esp_log.h"
 #include "string.h"
 
+static const char *TAG = "zigbee";
 
-void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID, void *value, uint8_t value_length)
+// Sets an attribute and reports it to the coordinator. Called from the sensor
+// task, so the Zigbee lock is mandatory (the stack is not thread safe).
+bool reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID, void *value)
 {
     esp_zb_zcl_report_attr_cmd_t cmd = {
         .zcl_basic_cmd = {
@@ -16,7 +20,21 @@ void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID,
         .attributeID = attributeID,
         .cluster_role = ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
     };
-    esp_zb_zcl_attr_t *value_r = esp_zb_zcl_get_attribute(endpoint, clusterID, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, attributeID);
-    memcpy(value_r->data_p, value, value_length);
-    ESP_ERROR_CHECK(esp_zb_zcl_report_attr_cmd_req(&cmd));
+    if (!esp_zb_lock_acquire(portMAX_DELAY)) {
+        ESP_LOGW(TAG, "Could not acquire Zigbee lock");
+        return false;
+    }
+    esp_err_t err = ESP_FAIL;
+    esp_zb_zcl_status_t status = esp_zb_zcl_set_attribute_val(endpoint, clusterID, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, attributeID, value, false);
+    if (status == ESP_ZB_ZCL_STATUS_SUCCESS) {
+        err = esp_zb_zcl_report_attr_cmd_req(&cmd);
+    }
+    esp_zb_lock_release();
+    if (status != ESP_ZB_ZCL_STATUS_SUCCESS || err != ESP_OK) {
+        // Not fatal: the next measurement sends the value again.
+        ESP_LOGW(TAG, "Report of cluster 0x%04x attribute 0x%04x failed (status %d, %s)",
+                 clusterID, attributeID, status, esp_err_to_name(err));
+        return false;
+    }
+    return true;
 }

@@ -146,6 +146,7 @@ void pm_dump(void *pvParameters) {
 
 void app_main(void)
 {
+    diagnostics_init();
     configure_internal_antenna();
     esp_zb_platform_config_t config = {
         .radio_config = ESP_ZB_DEFAULT_RADIO_CONFIG(),

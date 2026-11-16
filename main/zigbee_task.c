@@ -64,12 +64,12 @@ void esp_zb_task(void *pvParameters)
         .zcl_version = ESP_ZB_ZCL_BASIC_ZCL_VERSION_DEFAULT_VALUE,
         .power_source = 0x04, // mains powered
     };
-    uint32_t ApplicationVersion = 0x0002;
+    uint32_t ApplicationVersion = 0x0003;
     uint32_t StackVersion = 0x0002;
     uint32_t HWVersion = 0x0002;
     DEFINE_PSTRING(ManufacturerName, "FlorianL");
     DEFINE_PSTRING(ModelIdentifier, "CO2 Sensor");
-    DEFINE_PSTRING(DateCode, "20241004");
+    DEFINE_PSTRING(DateCode, "20261116");
 
     esp_zb_attribute_list_t *esp_zb_basic_cluster = esp_zb_basic_cluster_create(&basic_cluster_cfg);
     esp_zb_basic_cluster_add_attr(esp_zb_basic_cluster, ESP_ZB_ZCL_ATTR_BASIC_APPLICATION_VERSION_ID, &ApplicationVersion);
@@ -126,6 +126,25 @@ void esp_zb_task(void *pvParameters)
     };
 
     esp_zb_ep_list_add_ep(esp_zb_ep_list, esp_zb_cluster_list, endpoint_config);
+
+    // ------------------------------ Diagnostic counters ------------------------------
+    // One analog input per endpoint: failed measurements and restarts since power-on.
+    const uint8_t counter_endpoints[] = {HA_ESP_ERRORS_ENDPOINT, HA_ESP_RESTARTS_ENDPOINT};
+    for (size_t i = 0; i < sizeof(counter_endpoints); i++) {
+        esp_zb_analog_input_cluster_cfg_t analog_input_cfg = {
+            .out_of_service = false,
+            .present_value = 0,
+            .status_flags = 0,
+        };
+        esp_zb_cluster_list_t *counter_clusters = esp_zb_zcl_cluster_list_create();
+        esp_zb_cluster_list_add_analog_input_cluster(counter_clusters, esp_zb_analog_input_cluster_create(&analog_input_cfg), ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+        esp_zb_endpoint_config_t counter_config = {
+            .endpoint = counter_endpoints[i],
+            .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID,
+            .app_device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID,
+        };
+        esp_zb_ep_list_add_ep(esp_zb_ep_list, counter_clusters, counter_config);
+    }
 
     // ------------------------------ Register Device ------------------------------
     esp_zb_device_register(esp_zb_ep_list);

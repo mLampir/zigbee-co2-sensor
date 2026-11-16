@@ -1,5 +1,19 @@
 # CO2 Zigbee sensor
 
+> **Fork** of [florianL21/zigbee-co2-sensor](https://github.com/florianL21/zigbee-co2-sensor) with fixes for a sensor that stops measuring:
+>
+> - Built with ESP-IDF **v5.3.4**. Up to v5.3.1 the I2C driver can spin forever in
+>   `s_i2c_master_clear_bus` after an I2C timeout; the Zigbee part keeps running and
+>   reports the last values, so the sensor looks alive but never measures again.
+> - Zigbee API calls from the sensor task take the Zigbee lock (mandatory per the
+>   esp-zigbee-sdk; newer IDF versions assert on it, see upstream issue #6).
+> - The task watchdog restarts the ESP instead of only logging; after 15 minutes
+>   without a valid measurement the firmware restarts itself.
+> - Waiting for a measurement has a timeout; a failed report no longer aborts.
+> - Peripherals stay powered in light sleep (I2C errors appeared right after the first sleep).
+> - Diagnostic counters since power-on, as Analog Input clusters: endpoint 11 =
+>   failed measurements, endpoint 12 = restarts.
+
 ![Render of sensor](images/render.png)
 
 This project is a Zigbee device based on the ESP32-H2 / ESP32-C6 that can read CO2 sensor values from a Sensirion SCD-4X based sensor via i2c.
