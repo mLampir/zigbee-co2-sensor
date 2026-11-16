@@ -55,7 +55,9 @@ void esp_zb_task(void *pvParameters)
     /* initialize Zigbee stack with Zigbee end-device config */
     esp_zb_cfg_t zb_nwk_cfg = ESP_ZB_ZED_CONFIG();
     /* Enable zigbee light sleep */
-    esp_zb_sleep_enable(ENABLE_LIGHT_SLEEP);
+    // Keep the Zigbee sleep setting the device was paired with (false = rejoin fails);
+    // whether the chip really sleeps is decided in main.c (ENABLE_LIGHT_SLEEP).
+    esp_zb_sleep_enable(true);
     esp_zb_sleep_set_threshold(ZIGBEE_SLEEP_THRESHOLD);
     // zb_zdo_pim_set_long_poll_interval(ED_KEEP_ALIVE);
     esp_zb_init(&zb_nwk_cfg);
