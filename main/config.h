@@ -5,8 +5,8 @@
 
 
 #define SDC4X_SDA_PIN GPIO_NUM_22
-// SCL on D9 (GPIO20): the pad D5 (GPIO23) of this XIAO lost its connection
-#define SDC4X_SCL_PIN  GPIO_NUM_20
+// SCL on D8 (GPIO19): the pads D5 (GPIO23) and D9 (GPIO20) of this XIAO have no connection
+#define SDC4X_SCL_PIN  GPIO_NUM_19
 // Recommened measurement interval from sensirion is 5 minutes as the default ASC settings are assuming 5 minutes
 #define MEASURE_INTERVAL_MS (60 * 5 * 1000)
 // After the 5 s single shot wait, poll the data ready flag at most this long
@@ -34,7 +34,7 @@
 
 // Wiring diagnosis: do not talk to the SCD4x, keep SDA/SCL as inputs without
 // internal pull-ups and log their levels every 5 s (voltages can be measured).
-#define I2C_WIRING_DIAG 1
+#define I2C_WIRING_DIAG 0
 
 // Misc settings, for very fine tuning
 // time in ms before the zigbee stack sends a CAN_SLEEP signal
