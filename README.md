@@ -2,17 +2,25 @@
 
 > **Fork** of [florianL21/zigbee-co2-sensor](https://github.com/florianL21/zigbee-co2-sensor) with fixes for a sensor that stops measuring:
 >
+> - **No light sleep** between measurements (`ENABLE_LIGHT_SLEEP` in `main/config.h`).
+>   With light sleep the SCD4x stopped answering on I2C right after the first sleep;
+>   without it the sensor measures reliably. It is USB powered, so the extra power
+>   does not matter. The Zigbee sleep setting stays as paired (turning it off made
+>   the rejoin fail).
 > - Built with ESP-IDF **v5.3.4**. Up to v5.3.1 the I2C driver can spin forever in
->   `s_i2c_master_clear_bus` after an I2C timeout; the Zigbee part keeps running and
+>   `s_i2c_master_clear_bus` after an I2C error; the Zigbee part keeps running and
 >   reports the last values, so the sensor looks alive but never measures again.
 > - Zigbee API calls from the sensor task take the Zigbee lock (mandatory per the
 >   esp-zigbee-sdk; newer IDF versions assert on it, see upstream issue #6).
 > - The task watchdog restarts the ESP instead of only logging; after 15 minutes
->   without a valid measurement the firmware restarts itself.
-> - Waiting for a measurement has a timeout; a failed report no longer aborts.
-> - Peripherals stay powered in light sleep (I2C errors appeared right after the first sleep).
-> - Diagnostic counters since power-on, as Analog Input clusters: endpoint 11 =
->   failed measurements, endpoint 12 = restarts.
+>   without a valid measurement the firmware restarts itself. Waiting for a
+>   measurement has a timeout; a failed report no longer aborts.
+> - Min/max of the temperature and humidity clusters in ZCL units (0.01 °C / 0.01 %),
+>   otherwise `esp_zb_zcl_set_attribute_val()` rejects every value.
+> - Failed measurements and restarts since power-on are counted and logged (USB
+>   serial). Reporting them as Analog Input (endpoints 11/12) is disabled for now:
+>   `esp_zb_zcl_report_attr_cmd_req()` asserts for them in esp-zigbee-lib 1.5.1.
+> - Every push to `main` creates a release `build-<n>` with the firmware files.
 
 ![Render of sensor](images/render.png)
 
