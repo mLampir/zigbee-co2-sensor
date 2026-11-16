@@ -182,10 +182,18 @@ void sdc41_task(void *pvParameters)
         .intr_type = GPIO_INTR_DISABLE,
     };
     gpio_config(&diag);
+    // Drive SCL as push-pull output: 3 s high, 3 s low. If the voltage at the
+    // solder joint follows, the joint is connected to the pin.
+    gpio_set_direction(SDC4X_SCL_PIN, GPIO_MODE_INPUT_OUTPUT);
+    int level = 1;
     while (1) {
-        ESP_LOGW(TAG, "Wiring diag: SDA (GPIO%d) = %d, SCL (GPIO%d) = %d (no internal pull-ups)",
-                 SDC4X_SDA_PIN, gpio_get_level(SDC4X_SDA_PIN), SDC4X_SCL_PIN, gpio_get_level(SDC4X_SCL_PIN));
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        gpio_set_level(SDC4X_SCL_PIN, level);
+        vTaskDelay(pdMS_TO_TICKS(50));
+        ESP_LOGW(TAG, "Wiring diag: SCL (GPIO%d) driven %s, reads %d; SDA (GPIO%d) reads %d",
+                 SDC4X_SCL_PIN, level ? "HIGH 3.3V" : "LOW 0V", gpio_get_level(SDC4X_SCL_PIN),
+                 SDC4X_SDA_PIN, gpio_get_level(SDC4X_SDA_PIN));
+        vTaskDelay(pdMS_TO_TICKS(2950));
+        level = !level;
     }
 #endif
     sensirion_i2c_hal_init(SDC4X_SDA_PIN, SDC4X_SCL_PIN);
