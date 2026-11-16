@@ -27,6 +27,10 @@
 #define CO2_MIN 0.0
 #define CO2_MAX 5000.0
 
+// Light sleep between measurements. Off: the sensor runs on USB power anyway,
+// and I2C to the SCD4x failed again and again after sleeping.
+#define ENABLE_LIGHT_SLEEP 0
+
 // Misc settings, for very fine tuning
 // time in ms before the zigbee stack sends a CAN_SLEEP signal
 #define ZIGBEE_SLEEP_THRESHOLD 20

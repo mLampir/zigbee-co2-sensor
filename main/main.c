@@ -97,7 +97,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
                     break;
             }
         }
-        if(allow_sleep) {
+        if(ENABLE_LIGHT_SLEEP && allow_sleep) {
             // sensor values have been read and sending via zigbee was requested
             #if DEBUG_SLEEP
             ESP_LOGI(TAG, "Going to sleep");
@@ -121,7 +121,7 @@ static esp_err_t esp_zb_power_save_init(void)
     esp_pm_config_t pm_config = {
         .max_freq_mhz = CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ,
         .min_freq_mhz = 40,
-        .light_sleep_enable = true
+        .light_sleep_enable = ENABLE_LIGHT_SLEEP
     };
     return esp_pm_configure(&pm_config);
 }
