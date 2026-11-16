@@ -49,6 +49,7 @@ void diagnostics_init(void)
 
 static void report_diagnostics(void)
 {
+    ESP_LOGI(TAG, "Diagnostics: errors %" PRIu32 ", restarts %" PRIu32, error_count, restart_count);
     if (!diagnostics_reporting_ok) {
         return;
     }

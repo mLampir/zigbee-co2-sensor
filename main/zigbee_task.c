@@ -154,7 +154,9 @@ void esp_zb_task(void *pvParameters)
     // the endpoint has no reporting info for the attribute. The library creates
     // it for the measurement clusters, not for Analog Input, so add it here
     // (no periodic reports, huge delta: the firmware reports by itself).
-    diagnostics_reporting_ok = true;
+    // Reporting the counters still hit the assertion above with reporting info
+    // in place (esp-zigbee-lib 1.5.1), so they are only counted and logged for now.
+    diagnostics_reporting_ok = false;
     for (size_t i = 0; i < sizeof(counter_endpoints); i++) {
         esp_zb_zcl_reporting_info_t reporting_info = {
             .direction = ESP_ZB_ZCL_CMD_DIRECTION_TO_SRV,
@@ -173,9 +175,7 @@ void esp_zb_task(void *pvParameters)
         memcpy(reporting_info.u.send_info.delta.data_buf, &delta, sizeof(delta));
         esp_err_t err = esp_zb_zcl_update_reporting_info(&reporting_info);
         if (err != ESP_OK) {
-            ESP_LOGW(TAG, "No reporting info for endpoint %d (%s), counters will not be sent",
-                     counter_endpoints[i], esp_err_to_name(err));
-            diagnostics_reporting_ok = false;
+            ESP_LOGW(TAG, "No reporting info for endpoint %d (%s)", counter_endpoints[i], esp_err_to_name(err));
         }
     }
 
