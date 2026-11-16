@@ -5,7 +5,8 @@
 
 
 #define SDC4X_SDA_PIN GPIO_NUM_22
-#define SDC4X_SCL_PIN  GPIO_NUM_23
+// SCL on D9 (GPIO20): the pad D5 (GPIO23) of this XIAO lost its connection
+#define SDC4X_SCL_PIN  GPIO_NUM_20
 // Recommened measurement interval from sensirion is 5 minutes as the default ASC settings are assuming 5 minutes
 #define MEASURE_INTERVAL_MS (60 * 5 * 1000)
 // After the 5 s single shot wait, poll the data ready flag at most this long

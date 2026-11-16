@@ -18,10 +18,9 @@ jobs:
     strategy:
       matrix:
         target:
+          # Only the ESP32-C6 is used; the H2 build took up to 17 minutes
           - chip: esp32c6
             flash_freq: 80m
-          - chip: esp32h2
-            flash_freq: 48m
 
     runs-on: ubuntu-latest
 
